@@ -1,0 +1,127 @@
+{
+  "$schema": "https://www.krakend.io/schema/v3.json",
+  "version": 3,
+  "name": "KrakenD - API Gateway",
+  "timeout": "60000ms",
+  "cache_ttl": "300s",
+  "plugin": {
+    "pattern": ".so",
+    "folder": "/opt/krakend/plugins/"
+  },
+  "extra_config": {
+    "github.com/devopsfaith/krakend/proxy": {
+      "disable_chunked": true
+    },
+    "github.com/devopsfaith/krakend/http": {
+      "return_error_details": true
+    },
+    "plugin/http-server": {
+      "name": [
+        "krakend-rbac",
+        "krakend-jwt-validator",
+        "krakend-validator-bypass"
+      ],
+      "krakend-validator-bypass": {
+        "exceptions": [
+          "/v1/signup",
+          "/v1/login",
+          "/v1/profile/verifyaccount/{userId}",
+          "/v1/profile/{userId}/setpassword"
+        ]
+      },
+      "krakend-jwt-validator": {
+        "shared_secret": "your-256-bit-secret",
+        "jwks_url": "https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_A8L3bpX38/.well-known/jwks.json"
+      },
+      "krakend-rbac": { }
+    }
+  },
+  "endpoints": [
+    {
+      "endpoint": "/v1/signup",
+      "output_encoding": "no-op",
+      "method": "POST",
+      "backend": [
+        {
+          "encoding": "no-op",
+          "url_pattern": "/v1/signup",
+          "host": [
+            "http://host.docker.internal:3000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/v1/profile/verifyaccount/{userId}",
+      "output_encoding": "no-op",
+      "method": "POST",
+      "backend": [
+        {
+          "encoding": "no-op",
+          "url_pattern": "/v1/profile/verifyaccount/{userId}",
+          "host": [
+            "http://host.docker.internal:3000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/v1/profile/{userId}/setpassword",
+      "output_encoding": "no-op",
+      "method": "PUT",
+      "backend": [
+        {
+          "encoding": "no-op",
+          "url_pattern": "/v1/profile/{userId}/setpassword",
+          "host": [
+            "http://host.docker.internal:3000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/v1/login",
+      "output_encoding": "no-op",
+      "method": "POST",
+      "backend": [
+        {
+          "url_pattern": "/v1/login",
+          "host": [
+            "http://host.docker.internal:3000"
+          ],
+          "extra_config": {
+            "github.com/devopsfaith/krakend/proxy": {
+              "headers_to_pass": [
+                "Content-Type"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "endpoint": "/protected-resource",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/backend-protected",
+          "host": [
+            "http://your-backend-service"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/users",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/backend-protected",
+          "host": [
+            "http://your-backend-service"
+          ]
+        }
+      ]
+    }
+  ]
+}
